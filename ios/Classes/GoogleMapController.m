@@ -20,7 +20,6 @@ static void interpretMarkerOptions(id json, id<FLTGoogleMapMarkerOptionsSink> si
 static void interpretPolylineOptions(id json, id<FLTGoogleMapPolylineOptionsSink> sink,
                                      NSObject<FlutterPluginRegistrar>* registrar);
 
-
 @implementation FLTGoogleMapFactory {
   NSObject<FlutterPluginRegistrar>* _registrar;
 }
@@ -55,6 +54,11 @@ static void interpretPolylineOptions(id json, id<FLTGoogleMapPolylineOptionsSink
   FlutterMethodChannel* _channel;
   BOOL _trackCameraPosition;
   NSObject<FlutterPluginRegistrar>* _registrar;
+  // Used for the temporary workaround for a bug that the camera is not properly positioned at
+  // initialization. https://github.com/flutter/flutter/issues/24806
+  // TODO(cyanglaz): Remove this temporary fix once the Maps SDK issue is resolved.
+  // https://github.com/flutter/flutter/issues/27550
+  BOOL _cameraDidInitialSetup;
 }
 
 - (instancetype)initWithFrame:(CGRect)frame
@@ -82,6 +86,7 @@ static void interpretPolylineOptions(id json, id<FLTGoogleMapPolylineOptionsSink
     }];
     _mapView.delegate = weakSelf;
     _registrar = registrar;
+    _cameraDidInitialSetup = NO;
   }
   return self;
 }
@@ -120,9 +125,6 @@ static void interpretPolylineOptions(id json, id<FLTGoogleMapPolylineOptionsSink
   } else if ([call.method isEqualToString:@"marker#remove"]) {
     [self removeMarkerWithId:call.arguments[@"marker"]];
     result(nil);
-  } else if ([call.method isEqualToString:@"style#add"]) {
-    [self addMapStyle:call.arguments[@"style"]];
-    result(nil);
   } else if ([call.method isEqualToString:@"polyline#add"]) {
     NSDictionary* options = call.arguments[@"options"];
     NSString* polylineId = [self addPolylineWithPoints:toPoints(options[@"points"])];
@@ -158,6 +160,10 @@ static void interpretPolylineOptions(id json, id<FLTGoogleMapPolylineOptionsSink
   [_mapView moveCamera:cameraUpdate];
 }
 
+- (void)setMapStyle:(GMSMapStyle *)mapStyle {
+  _mapView.mapStyle = mapStyle;
+}
+
 - (GMSCameraPosition*)cameraPosition {
   if (_trackCameraPosition) {
     return _mapView.camera;
@@ -165,13 +171,6 @@ static void interpretPolylineOptions(id json, id<FLTGoogleMapPolylineOptionsSink
     return nil;
   }
 }
-
-
-- (void)addMapStyle:(NSString*)mapStyle {
-  GMSMapStyle* style = [GMSMapStyle styleWithJSONString:mapStyle error:nil];
-  _mapView.mapStyle = style;
-}
-
 
 - (NSString*)addMarkerWithPosition:(CLLocationCoordinate2D)position {
   FLTGoogleMapMarkerController* markerController =
@@ -211,7 +210,6 @@ static void interpretPolylineOptions(id json, id<FLTGoogleMapPolylineOptionsSink
     [_polylines removeObjectForKey:polylineId];
   }
 }
-
 
 #pragma mark - FLTGoogleMapOptionsSink methods
 
@@ -267,6 +265,16 @@ static void interpretPolylineOptions(id json, id<FLTGoogleMapPolylineOptionsSink
 }
 
 - (void)mapView:(GMSMapView*)mapView didChangeCameraPosition:(GMSCameraPosition*)position {
+  if (!_cameraDidInitialSetup) {
+    // We suspected a bug in the iOS Google Maps SDK caused the camera is not properly positioned at
+    // initialization. https://github.com/flutter/flutter/issues/24806
+    // This temporary workaround fix is provided while the actual fix in the Google Maps SDK is
+    // still being investigated.
+    // TODO(cyanglaz): Remove this temporary fix once the Maps SDK issue is resolved.
+    // https://github.com/flutter/flutter/issues/27550
+    _cameraDidInitialSetup = YES;
+    [mapView moveCamera:[GMSCameraUpdate setCamera:_mapView.camera]];
+  }
   if (_trackCameraPosition) {
     [_channel invokeMethod:@"camera#onMove" arguments:@{@"position" : positionToJson(position)}];
   }
@@ -355,7 +363,7 @@ static NSMutableArray* toPoints(id json) {
                                                    longitude:toDouble(data[i][1])];
     [points addObject:point];
   }
-  
+
   return points;
 }
 
@@ -391,6 +399,14 @@ static GMSMapViewType toMapViewType(id json) {
   int value = toInt(json);
   return (GMSMapViewType)(value == 0 ? 5 : value);
 }
+
+static GMSMapStyle* toMapStyle(id json) {
+  NSString* data = json;
+  NSError * error;
+  GMSMapStyle* style = [GMSMapStyle styleWithJSONString:data error:&error];
+  return style;
+}
+
 
 static GMSCameraUpdate* toCameraUpdate(id json) {
   NSArray* data = json;
@@ -465,6 +481,10 @@ static void interpretMapOptions(id json, id<FLTGoogleMapOptionsSink> sink) {
   id myLocationEnabled = data[@"myLocationEnabled"];
   if (myLocationEnabled) {
     [sink setMyLocationEnabled:toBool(myLocationEnabled)];
+  }
+  id mapStyle = data[@"mapStyle"];
+  if (mapStyle) {
+    [sink setMapStyle:toMapStyle(mapStyle)];
   }
 }
 

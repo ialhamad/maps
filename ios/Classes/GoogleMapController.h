@@ -20,6 +20,7 @@
 - (void)setTrackCameraPosition:(BOOL)enabled;
 - (void)setZoomGesturesEnabled:(BOOL)enabled;
 - (void)setMyLocationEnabled:(BOOL)enabled;
+- (void)setMapStyle:(GMSMapStyle *)mapStyle;    
 @end
 
 // Defines map overlay controllable from Flutter.
@@ -36,7 +37,6 @@
 - (GMSCameraPosition *)cameraPosition;
 - (NSString *)addMarkerWithPosition:(CLLocationCoordinate2D)position;
 - (FLTGoogleMapMarkerController *)markerWithId:(NSString *)markerId;
-- (void)addMapStyle:(NSString*)mapStyle;
 - (void)removeMarkerWithId:(NSString *)markerId;
 - (NSString *)addPolylineWithPoints:(NSMutableArray *)points;
 - (FLTGoogleMapPolylineController *)polylineWithId:(NSString *)polylineId;

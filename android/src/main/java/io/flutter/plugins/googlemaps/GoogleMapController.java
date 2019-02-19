@@ -67,6 +67,7 @@ final class GoogleMapController
   private GoogleMap googleMap;
   private boolean trackCameraPosition = false;
   private boolean myLocationEnabled = false;
+    private MapStyleOptions mapStyle;
   private boolean disposed = false;
   private final float density;
   private MethodChannel.Result mapReadyResult;
@@ -213,6 +214,7 @@ final class GoogleMapController
     googleMap.setOnMarkerDragListener(this);
     googleMap.setOnPolylineClickListener(this);
     updateMyLocationEnabled();
+    updateMapStyle();
   }
 
   @Override
@@ -270,14 +272,6 @@ final class GoogleMapController
           result.success(null);
           break;
         }
-      case "style#add":
-      {
-        final String style = call.argument("style");
-        MapStyleOptions mapStyleOptions = new MapStyleOptions(style);
-        this.setMapStyle(mapStyleOptions);
-        result.success(null);
-        break;
-      }
       case "polyline#add":
         {
           final PolylineBuilder polylineBuilder = newPolylineBuilder();
@@ -370,6 +364,7 @@ final class GoogleMapController
       return;
     }
     disposed = true;
+    methodChannel.setMethodCallHandler(null);
     mapView.onDestroy();
     registrar.activity().getApplication().unregisterActivityLifecycleCallbacks(this);
   }
@@ -429,10 +424,6 @@ final class GoogleMapController
     }
     mapView.onDestroy();
   }
-  public void setMapStyle(MapStyleOptions mapStyle) {
-    googleMap.setMapStyle(mapStyle);
-  }
-
 
   // GoogleMapOptionsSink methods
 
@@ -498,6 +489,16 @@ final class GoogleMapController
     }
   }
 
+    @Override
+  public void setMapStyle(MapStyleOptions mapStyle) {
+    this.mapStyle = mapStyle;
+
+    if (googleMap != null) {
+      updateMapStyle();
+    }
+  }
+
+
   private void updateMyLocationEnabled() {
     if (hasLocationPermission()) {
       googleMap.setMyLocationEnabled(myLocationEnabled);
@@ -507,6 +508,12 @@ final class GoogleMapController
       Log.e(TAG, "Cannot enable MyLocation layer as location permissions are not granted");
     }
   }
+
+    private void updateMapStyle() {
+    Log.i("GoogleMapController", "setting mapStyle");
+    googleMap.setMapStyle(mapStyle);
+  }
+
 
   private boolean hasLocationPermission() {
     return checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)

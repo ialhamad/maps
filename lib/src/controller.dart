@@ -31,6 +31,9 @@ class GoogleMapController extends ChangeNotifier {
     assert(id != null);
     final MethodChannel channel =
         MethodChannel('plugins.flutter.io/google_maps_$id');
+    // TODO(amirh): remove this on when the invokeMethod update makes it to stable Flutter.
+    // https://github.com/flutter/flutter/issues/26431
+    // ignore: strong_mode_implicit_dynamic_method
     await channel.invokeMethod('map#waitForMap');
     return GoogleMapController._(id, channel, initialCameraPosition);
   }
@@ -129,6 +132,9 @@ class GoogleMapController extends ChangeNotifier {
   /// The returned [Future] completes after listeners have been notified.
   Future<void> _updateMapOptions(Map<String, dynamic> optionsUpdate) async {
     assert(optionsUpdate != null);
+    // TODO(amirh): remove this on when the invokeMethod update makes it to stable Flutter.
+    // https://github.com/flutter/flutter/issues/26431
+    // ignore: strong_mode_implicit_dynamic_method
     final dynamic json = await _channel.invokeMethod(
       'map#update',
       <String, dynamic>{
@@ -144,6 +150,9 @@ class GoogleMapController extends ChangeNotifier {
   /// The returned [Future] completes after the change has been started on the
   /// platform side.
   Future<void> animateCamera(CameraUpdate cameraUpdate) async {
+    // TODO(amirh): remove this on when the invokeMethod update makes it to stable Flutter.
+    // https://github.com/flutter/flutter/issues/26431
+    // ignore: strong_mode_implicit_dynamic_method
     await _channel.invokeMethod('camera#animate', <String, dynamic>{
       'cameraUpdate': cameraUpdate._toJson(),
     });
@@ -154,22 +163,12 @@ class GoogleMapController extends ChangeNotifier {
   /// The returned [Future] completes after the change has been made on the
   /// platform side.
   Future<void> moveCamera(CameraUpdate cameraUpdate) async {
+    // TODO(amirh): remove this on when the invokeMethod update makes it to stable Flutter.
+    // https://github.com/flutter/flutter/issues/26431
+    // ignore: strong_mode_implicit_dynamic_method
     await _channel.invokeMethod('camera#move', <String, dynamic>{
       'cameraUpdate': cameraUpdate._toJson(),
     });
-  }
-
-  /// Add custom styling to the map.
-  ///
-  /// The returned [Future] completes after the change has been made on the
-  /// platform side.
-  Future<void> addMapStyle(String style) async {
-    await _channel.invokeMethod(
-      'style#add',
-      <String, dynamic>{
-        'style': style,
-      },
-    );
   }
 
   /// Adds a marker to the map, configured using the specified custom [options].
@@ -182,6 +181,9 @@ class GoogleMapController extends ChangeNotifier {
   Future<Marker> addMarker(MarkerOptions options) async {
     final MarkerOptions effectiveOptions =
         MarkerOptions.defaultOptions.copyWith(options);
+    // TODO(amirh): remove this on when the invokeMethod update makes it to stable Flutter.
+    // https://github.com/flutter/flutter/issues/26431
+    // ignore: strong_mode_implicit_dynamic_method
     final String markerId = await _channel.invokeMethod(
       'marker#add',
       <String, dynamic>{
@@ -205,6 +207,9 @@ class GoogleMapController extends ChangeNotifier {
     assert(marker != null);
     assert(_markers[marker._id] == marker);
     assert(changes != null);
+    // TODO(amirh): remove this on when the invokeMethod update makes it to stable Flutter.
+    // https://github.com/flutter/flutter/issues/26431
+    // ignore: strong_mode_implicit_dynamic_method
     await _channel.invokeMethod('marker#update', <String, dynamic>{
       'marker': marker._id,
       'options': changes._toJson(),
@@ -248,6 +253,9 @@ class GoogleMapController extends ChangeNotifier {
   /// The returned [Future] completes once the marker has been removed from
   /// [_markers].
   Future<void> _removeMarker(String id) async {
+    // TODO(amirh): remove this on when the invokeMethod update makes it to stable Flutter.
+    // https://github.com/flutter/flutter/issues/26431
+    // ignore: strong_mode_implicit_dynamic_method
     await _channel.invokeMethod('marker#remove', <String, dynamic>{
       'marker': id,
     });
@@ -288,6 +296,9 @@ class GoogleMapController extends ChangeNotifier {
     assert(polyline != null);
     assert(_polylines[polyline._id] == polyline);
     assert(changes != null);
+    // TODO(amirh): remove this on when the invokeMethod update makes it to stable Flutter.
+    // https://github.com/flutter/flutter/issues/26431
+    // ignore: strong_mode_implicit_dynamic_method
     await _channel.invokeMethod('polyline#update', <String, dynamic>{
       'polyline': polyline._id,
       'options': changes._toJson(),
@@ -331,6 +342,9 @@ class GoogleMapController extends ChangeNotifier {
   /// The returned [Future] completes once the polyline has been removed from
   /// [_polylines].
   Future<void> _removePolyline(String id) async {
+    // TODO(amirh): remove this on when the invokeMethod update makes it to stable Flutter.
+    // https://github.com/flutter/flutter/issues/26431
+    // ignore: strong_mode_implicit_dynamic_method
     await _channel.invokeMethod('polyline#remove', <String, dynamic>{
       'polyline': id,
     });

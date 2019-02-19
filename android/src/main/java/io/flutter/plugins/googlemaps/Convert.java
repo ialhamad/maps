@@ -21,6 +21,8 @@ import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.PatternItem;
 import com.google.android.gms.maps.model.RoundCap;
 import com.google.android.gms.maps.model.SquareCap;
+import com.google.android.gms.maps.model.MapStyleOptions;
+
 import io.flutter.view.FlutterMain;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -173,6 +175,11 @@ class Convert {
     return (String) o;
   }
 
+  private static MapStyleOptions toMapStyle(Object o) {
+    return new MapStyleOptions((String)o);
+  }
+
+
   static void interpretGoogleMapOptions(Object o, GoogleMapOptionsSink sink) {
     final Map<?, ?> data = toMap(o);
     final Object cameraTargetBounds = data.get("cameraTargetBounds");
@@ -206,6 +213,10 @@ class Convert {
     final Object tiltGesturesEnabled = data.get("tiltGesturesEnabled");
     if (tiltGesturesEnabled != null) {
       sink.setTiltGesturesEnabled(toBoolean(tiltGesturesEnabled));
+    }
+    final Object mapStyle = data.get("mapStyle");
+    if (mapStyle != null) {
+      sink.setMapStyle(toMapStyle(mapStyle));
     }
     final Object trackCameraPosition = data.get("trackCameraPosition");
     if (trackCameraPosition != null) {
@@ -321,8 +332,6 @@ class Convert {
     final Object pattern = data.get("pattern");
     if (pattern != null) {
       sink.setPattern(_toPattern(pattern));
-    } else if (data.containsKey("pattern")) {
-      sink.setPattern(null);
     }
   }
 
@@ -339,6 +348,11 @@ class Convert {
 
   private static List<PatternItem> _toPattern(Object o) {
     final List<?> data = toList(o);
+
+    if (data.isEmpty()) {
+      return null;
+    }
+
     final List<PatternItem> pattern = new ArrayList<>(data.size());
 
     for (Object ob : data) {
